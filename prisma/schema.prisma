@@ -1,0 +1,85 @@
+generator client {
+  provider   = "prisma-client"
+  output     = "../src/generated/prisma"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Patient {
+  patient_id              String            @id
+  first_name              String
+  last_name               String
+  dob                     DateTime
+  phone                   String?
+  email                   String            @unique
+  insurance_provider      String            @default("Self-Pay")
+  insurance_policy_number String?
+  current_medications     String            @default("None")
+  allergies               String            @default("None")
+  emergency_contact_name  String?
+  emergency_contact_phone String?
+  created_at              DateTime          @default(now())
+  updated_at              DateTime          @updatedAt
+  review_requested_at     DateTime?
+  version                 Int               @default(1)
+  check_ins               CheckInLog[]
+  audit_logs              PatientAuditLog[]
+
+  @@index([first_name, last_name, dob], map: "idx_patient_name_dob")
+  @@map("patients")
+}
+
+model PatientAuditLog {
+  id            Int      @id @default(autoincrement())
+  patient_id    String
+  field_changed String
+  old_value     String?
+  new_value     String?
+  changed_at    DateTime @default(now())
+  changed_by    String   @default("self-checkin")
+  patient       Patient  @relation(fields: [patient_id], references: [patient_id])
+
+  @@index([patient_id])
+  @@index([changed_at])
+  @@map("patient_audit_log")
+}
+
+model Transaction {
+  id                    Int      @id @default(autoincrement())
+  transaction_id        String   @unique
+  patient_id            String
+  payment_id            String
+  square_receipt_url    String?
+  square_receipt_number String?
+  amount                Decimal
+  currency              String   @default("USD")
+  status                String   @default("COMPLETED")
+  card_brand            String?
+  card_last_four        String?
+  reason_for_visit      String?
+  created_at            DateTime @default(now())
+
+  @@index([patient_id])
+  @@index([payment_id])
+  @@index([created_at])
+  @@map("transactions")
+}
+
+model CheckInLog {
+  id                    Int      @id @default(autoincrement())
+  patient_id            String
+  check_in_time         DateTime @default(now())
+  appointment_confirmed Boolean  @default(false)
+  payment_status        String?
+  transaction_id        String?
+  reason_for_visit      String?
+  status                String   @default("WAITING")
+  patient               Patient  @relation(fields: [patient_id], references: [patient_id])
+
+  @@index([patient_id])
+  @@index([check_in_time])
+  @@map("check_in_log")
+}
