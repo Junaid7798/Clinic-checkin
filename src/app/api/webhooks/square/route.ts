@@ -134,3 +134,15 @@ async function handleCompletedPayment(payment: any) {
         console.error(`[Webhook] Failed to sync transaction ${paymentId}:`, err);
     }
 }
+
+async function handleBookingEvent(booking: any) {
+    const bookingId = booking.id;
+    const status = booking.status;
+    const startTime = booking.start_at;
+    const customerId = booking.customer_id;
+
+    console.log(`[Webhook] Processing booking event: ${bookingId}, Status: ${status}, Customer: ${customerId}, Start: ${startTime}`);
+
+    // Here you could sync with your database or notify staff
+    // For now, we just log it as the build currently requires this function to exist.
+}
